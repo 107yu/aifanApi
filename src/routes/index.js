@@ -7,10 +7,23 @@ let cName = "aifan"
 router.get('/', function(req, res, next) {
     res.render('index', { title: 'Express' });
 });
-router.get('/getdata', function(req, res, next) {
-    Mongo.find(dbName, cName, {}, (rs) => {
-        if (rs) {
-            res.send({ code: 1, data: rs })
+router.post('/getdata', function(req, res, next) {
+    let { type, limit, page } = req.body
+    if (!type || !limit || !page) {
+        return res.send({ code: 2, msg: "参数不完整" })
+    }
+    Mongo.find(dbName, cName, { type: type }, (len) => {
+        if (len) {
+            Mongo.find(dbName, cName, { type: type }, (rs) => {
+                if (rs) {
+                    res.send({ code: 1, data: rs, size: len.length })
+                } else {
+                    res.send({ code: 0, msg: "error" })
+                }
+            }, {
+                limit: limit,
+                skip: (page - 1) * limit
+            })
         }
     })
 });
